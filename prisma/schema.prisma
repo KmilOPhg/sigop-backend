@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id               Int        @id @default(autoincrement())
+  nombre           String
+  email            String     @unique
+  passwordHash     String     @map("password_hash")
+  estado           String     @default("activo")
+  rolId            Int        @map("rol_id")
+  rol              Rol        @relation(fields: [rolId], references: [id])
+  materiales       Material[]
+  resetToken       String?    @map("reset_token")
+  resetTokenExpiry DateTime?  @map("reset_token_expiry")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  @@map("usuarios")
+}
+
+model Rol {
+  id          Int          @id @default(autoincrement())
+  nombre      String       @unique
+  descripcion String?
+  activo      Boolean      @default(true)
+  usuarios    Usuario[]
+  rolPermisos RolPermiso[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("roles")
+}
+
+model Permiso {
+  id          Int          @id @default(autoincrement())
+  codigo      String       @unique
+  nombre      String
+  descripcion String?
+  modulo      String
+  rolPermisos RolPermiso[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("permisos")
+}
+
+model RolPermiso {
+  id        Int     @id @default(autoincrement())
+  rolId     Int     @map("rol_id")
+  permisoId Int     @map("permiso_id")
+  rol       Rol     @relation(fields: [rolId], references: [id])
+  permiso   Permiso @relation(fields: [permisoId], references: [id])
+
+  @@unique([rolId, permisoId])
+  @@map("rol_permisos")
+}
+
+model Material {
+  id             Int      @id @default(autoincrement())
+  itemMaterial   String   @unique @map("item_material")
+  nombreMaterial String   @map("nombre_material")
+  unidadMedida   String   @map("unidad_medida")
+  estado         String   @default("activo")
+  usuarioId      Int?     @map("user_id")
+  usuario        Usuario? @relation(fields: [usuarioId], references: [id])
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("materiales")
+}
+
+model Bodega {
+  id          Int      @id @default(autoincrement())
+  referencia  String   @unique
+  descripcion String
+  estado      String   @default("activo")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("bodega")
+}
